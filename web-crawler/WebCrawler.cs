@@ -38,7 +38,6 @@ namespace webcrawler
 						Console.Error.WriteLine(debug ? e2.ToString() : e2.Message);
 					}
 				}
-				Console.Error.WriteLine (debug ? e.ToString() : e.Message);
 			}
 			this.depth = depth;
 			this.cross_domain = cross_domain;
