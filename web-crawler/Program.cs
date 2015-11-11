@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using NDesk.Options;
 
 namespace webcrawler
 {
 	class MainClass
 	{
-		private static bool debug = false;
+		private static bool debug = true;
 		private bool show_help = false;
-		private int verbosity = 2;
 		List<string> urls = new List<string> ();
 		int depth = 0;
-		string mirror_dir = "";
-		bool mirror;
+		bool cross_domain;
 		OptionSet p;
 
 
@@ -41,25 +38,24 @@ namespace webcrawler
 				Environment.Exit(1);
 			}
 
+			// run the Crawler on all provided URLs
 			foreach (string url in urls) {
-				WebCrawler crawl = new WebCrawler (url, depth, debug, verbosity);
-				crawl.Run ();
+				WebCrawler crawl = new WebCrawler (url, depth, cross_domain, debug);
+				crawl.RunAsync (200); // run the crawler in async mode (with 20 threads)
 			}
-
+			Environment.Exit(0);
 		}
 
 		private void parseArguments(string[] args) {
 			p = new OptionSet (){ 
-				{ "m|mirror=", "mirror the specified websites to {NAME}",
-					v => mirror_dir = v },
+				{ "c|crossdomain", "whether to crawl through other domains aswell",
+					v => cross_domain = (v != null) ? true : false},
 				{ "l|depth=", "the max depthlevel of folders to crawl\n" +
 					"0 means no limit and is default.\n" +
 					"this has to be an integer.",
 					(int v) => depth = v },
 				{ "d|debug", "enables debug mode",
 					v => debug = true},
-				{ "v", "increase debug message verbosity",
-					v => { if (v != null) ++verbosity; } },
 				{ "h|help",  "show this message and exit", 
 					v => show_help = v != null },
 			};
@@ -78,8 +74,7 @@ namespace webcrawler
 
 		private void showHelp() {
 			Console.WriteLine ("Usage: web-crawler [OPTIONS]... URLs...");
-			Console.WriteLine ("Crawls the specified URLs according to the given options ( see below).");
-			Console.WriteLine ("If --mirror is not specified, no files will be stored permanently.");
+			Console.WriteLine ("Crawls the specified URLs according to the given options (see below).");
 			Console.WriteLine ();
 			Console.WriteLine ("Options:");
 			p.WriteOptionDescriptions (Console.Out);
