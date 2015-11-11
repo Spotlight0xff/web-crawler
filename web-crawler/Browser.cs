@@ -3,6 +3,7 @@ using HtmlAgilityPack;
 using System.Net;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 
 namespace webcrawler
@@ -22,7 +23,7 @@ namespace webcrawler
 			content = null;
 			status = 0;
 			uri = null;
-			userAgent = userAgent;
+			this.userAgent = userAgent;
 			redirect = null;
 		}
 
@@ -54,16 +55,13 @@ namespace webcrawler
 		///	<returns>HTTP status code or 0 on error</returns>
 		public int get(Uri uri)
 		{
-			// Debug.WriteLine("GET "+uri);
-
 			HttpWebRequest req = null;
 			try
 			{
-
-				req = (HttpWebRequest) WebRequest.Create(uri);   
+				req = WebRequest.CreateHttp(uri);   
 			} catch (Exception e)
 			{
-				Console.WriteLine("browser::get() exception: {0}", e.Message);
+				Console.WriteLine("browser::get() #1 exception: {0}", e.ToString());
 				return 0;
 			}
 
@@ -77,7 +75,7 @@ namespace webcrawler
 				response = (HttpWebResponse)req.GetResponse();
 			} catch ( WebException e)
 			{
-				Console.WriteLine("browser::get() exception: {0}", e.Message);
+				Console.WriteLine("browser::get() #2 exception: {0}", e.Message);
 				return 0;
 			}
 
@@ -91,10 +89,11 @@ namespace webcrawler
 			response.Close();
 
 			status = (int)response.StatusCode;
-			// Console.WriteLine("==> "+status);
+			redirect = response.Headers["Location"];
 			return status;
 
 		}
+
 
 		/// <summary>
 		/// Requests a Website with POST using the specified payload
