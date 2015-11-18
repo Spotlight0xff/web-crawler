@@ -1,6 +1,2 @@
 language: csharp
 solution: web-crawler.sln
-#before_install:
-#  - sudo apt-get install nunit-console
-#before_script:
-#  - nuget restore web-crawler.sln
