@@ -29,13 +29,13 @@ namespace webcrawler
 		{
 			try {
 				this.uri = new Uri(url);
-			} catch (Exception e) {
+			} catch (Exception) {
 				if (!url.StartsWith ("http://") && !url.StartsWith ("https://")) {
 					try {
 						this.uri = new Uri("http://" + url);
-					} catch (Exception e2) {
+					} catch (Exception e) {
 						Console.Error.WriteLine("Doesn't even work with http://"+url);
-						Console.Error.WriteLine(debug ? e2.ToString() : e2.Message);
+						Console.Error.WriteLine(debug ? e.ToString() : e.Message);
 					}
 				}
 			}
@@ -147,11 +147,11 @@ namespace webcrawler
 					success = marked_files.TryPop (out current);
 					list_files.Add (current.ToString());
 					if (debug) {
-						//Console.WriteLine ("{0} / {1} items!", list_files.Count, marked_files.Count);
+						Console.WriteLine ("{0} / {1} items!", list_files.Count, marked_files.Count);
 					}
 					if (success) {
 						if (debug) {
-							//Console.WriteLine ("New item: " + current);
+							Console.WriteLine ("New item: " + current);
 						}
 						State current_state = new State (current);
 						list_states.Add (current_state);
@@ -159,8 +159,8 @@ namespace webcrawler
 						if (success_pool) {
 							counter ++;
 							if (debug) {
-								//Console.WriteLine ("Started new Threadpool Task #{0}", counter);
-								//Console.WriteLine ("Currently using {0} Threads.", list_states.Count);
+								Console.WriteLine ("Started new Threadpool Task #{0}", counter);
+								Console.WriteLine ("Currently using {0} Threads.", list_states.Count);
 							}
 						}
 					}
@@ -170,11 +170,10 @@ namespace webcrawler
 				foreach (State state in list_states) {
 					if (state.eventWaitHandle.WaitOne(100)) { // check if one job is done, non-blocking
 						if (debug) {
-							//Console.WriteLine ("CrawlUrl() is done with {0} new items", state.result.Count);
+							Console.WriteLine ("CrawlUrl() is done with {0} new items", state.result.Count);
 							foreach (CrawlEntry entry in state.result) {
-								//Console.WriteLine ("Entry: "+entry);
 								if (!marked_files.Contains (entry) && !list_files.Contains (entry.ToString ())) {
-									//Console.WriteLine ("Pushed "+entry.ToString());
+									Console.WriteLine ("Pushed "+entry.ToString());
 									marked_files.Push (entry);
 								}
 							}
@@ -184,7 +183,7 @@ namespace webcrawler
 				}
 
 				if (debug && list_remove.Count > 0) {
-					//Console.WriteLine ("Removing  {0} states", list_remove.Count);
+					Console.WriteLine ("Removing  {0} states", list_remove.Count);
 				}
 				// remove the states which are done
 				foreach (State state in list_remove) {
@@ -216,13 +215,14 @@ namespace webcrawler
 
 		// PRODUCER! 
 		private void CrawlUrl(object obj) {
+			DateTime start = DateTime.Now;
 			State state = (State) obj;
 			CrawlEntry current = state.entry;
 			Browser browser = new Browser ();
 			List<string> files = new List<string> ();
 			string content;
 			if (debug) {
-				//Console.WriteLine("Crawl URI: {0}", current);
+				Console.WriteLine("Crawl URI: {0}", current);
 			}
 			int status = browser.get (current.ToString());
 			if (status == 0) { // error occured
@@ -238,8 +238,8 @@ namespace webcrawler
 				return;
 			}
 			if (debug) {
-				//Console.WriteLine ("Status: {0}", status);
-				//Console.WriteLine("Length: {0}", content.Count());
+				Console.WriteLine ("Status: {0}", status);
+				Console.WriteLine("Length: {0}", content.Count());
 			}
 			if (status >= 200 && status < 300) { // OK
 				List<string> urls = parseForUrls(content);
@@ -247,12 +247,12 @@ namespace webcrawler
 			}else if (status == 302 || status == 301) {
 				string redirect = browser.getRedirect();
 				if (debug) {
-					//Console.WriteLine("redirection to {0}", redirect);
+					Console.WriteLine("redirection to {0}", redirect);
 				}
 				files.Add (redirect); // TODO validate!
 			}
 			if (debug) {
-				//Console.WriteLine("CrawlUrl(\"{0}\") returns {1} items", current, files.Count);
+				Console.WriteLine("CrawlUrl(\"{0}\") returns {1} items", current, files.Count);
 			}
 
 			// save result
@@ -264,7 +264,10 @@ namespace webcrawler
 					Console.Error.WriteLine(e.ToString());
 				}
 			}
-
+			TimeSpan elapsed = DateTime.Now - start;
+			if (debug) {
+				Console.WriteLine ("CrawlUrl() took {0} milliseconds", elapsed.TotalMilliseconds);
+			}
 			state.eventWaitHandle.Set (); // We're done!
 		}
 
